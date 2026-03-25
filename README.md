@@ -2,6 +2,11 @@
 Given id's in a text file with main text and references with id's in another file, return a file with replacing all id's in text file
 
 
+## What you need
+- Install Ocaml: 
+
+
+## How it works
 This program will convert reference list to the APA 7th edition intext citation and replace the in-text id with the formatted citation. 
 
 NOTE: 
