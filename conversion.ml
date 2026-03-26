@@ -41,19 +41,25 @@ Some text here. Some text here. Some text here. Some text here. Some text here. 
 Some text here. Some text here. Some text here. Some text here. Some text here. Some text here. Some text here. Some text here. 
 Some text here. Some text here. Some text here. Some text here. Some text here (Valente et al., 2014; Persad et al., 2023). Some text here. Some text here. 
 
+<<REFERENCE>>
+     Persad, L. S., Binder-Markey, B. I., Shin, A. Y., Lieber, R. L., & Kaufman, K. R. (2023). American Society of Biomechanics Journal of Biomechanics Award 2022: Computer models do not accurately predict human muscle passive muscle force and fiber length: Evaluating subject-specific modeling impact on musculoskeletal model predictions. Journal of Biomechanics, 159, Article 111798. https://doi.org/10.1016/j.jbiomech.2023.111798
+
+     Valente, G., Pitto, L., Testi, D., Seth, A., Delp, S. L., Stagni, R., Viceconti, M., & Taddei, F. (2014). Are Subject-Specific Musculoskeletal Models Robust to the Uncertainties in Parameter Identification? PloS One, 9(11), e112625. https://doi.org/10.1371/journal.pone.0112625
+
+
 *)
 
 
 (*Reading file provided in a1*)
 let read_file path =
-  let fp = open_in  path in
+  let fp = open_in_bin  path in
   let s = really_input_string fp (in_channel_length fp) in
   close_in fp;
   s
 
 
 
-let ref = read_file "ref.txt";; 
+let reference = read_file "ref.txt";; 
 let text = read_file "text.txt";;
 
 
@@ -79,12 +85,6 @@ steps:
 
 let get_author_year text = 
   let list_refs = String.split_on_char '\n' text in 
-  let rec each_ref li acc= 
-    match li with 
-    |[]-> acc
-    |x :: xs->
-      let list_of_words = String.split_on_char ' ' x in 
-
       let rec find_name_year l acc = 
         match acc with 
         |None-> None 
@@ -113,6 +113,12 @@ let get_author_year text =
             ) 
           |[] -> match id with |None -> None |_-> Some  (id, name, None)
           )in 
+  let rec each_ref li acc= 
+    match li with 
+    |[]-> acc
+    |x :: xs->
+      let list_of_words = String.split_on_char ' ' x in 
+
         each_ref xs (acc@[find_name_year list_of_words (Some (None, None, None))])
       in 
   each_ref list_refs [];;
@@ -147,8 +153,13 @@ let in_text lst =
      |Some _ -> decoder xs acc
      )
     in
-    decoder lst []
-;;
+    decoder lst [];;
+
+
+(*
+Save the IDs used in the text 
+*)
+let used = ref [];;
 
 
 (*
@@ -159,11 +170,15 @@ Given id and list of (id, "citation") tuples, return the "citation"
   - if you cannot find the id, return the string of id 
       - In the next step, it can feed year or some number inside the paransis so just return the string.
 *)
+
+
 let rec look_up id lst = 
+  
   match lst with
-  |(i, Some(st))::xs-> if i = id then st else look_up id xs
+  |(i, Some(st))::xs-> if i = id then used := id::!used else (); if i = id then st else look_up id xs
   |(i, None)::xs -> if i = id then "Error_in_id: " ^ (string_of_int id) else look_up id xs
   |_-> string_of_int id;;
+
 
 
 (*
@@ -183,6 +198,7 @@ Replace the id in text.txt file with the in-text citation in ref.txt file
 
 *)
 
+
   let replace_citation text lst =
     let without_l = String.split_on_char '(' text in 
 
@@ -191,7 +207,7 @@ Replace the id in text.txt file with the in-text citation in ref.txt file
       |[]-> acc
       |x::[]-> let id = int_of_string_opt x in
         if id = None then acc ^ x else 
-          (look_up (Option.get id) lst)
+          citation_st [] (acc ^ (look_up (Option.get id) lst))
       |x::xs-> (
         let id =  int_of_string_opt x in
         if id != None then citation_st xs (acc ^ (look_up (Option.get id) lst))
@@ -221,31 +237,135 @@ Replace the id in text.txt file with the in-text citation in ref.txt file
 
 
 
+(*Sort the list by the iint value without duplication *)
+
+
+let cites = List.sort_uniq (fun x y -> x-y);;
+
+
+
+
+
+(*
+Given list of authors and years and used IDs, get the used citations/IDs and order them
+
+
+
+Steps:
+
+    1. Get the used IDs sorted. 
+
+    2. Remove citations that is not used 
+          - for id's 
+            - for id in list of authors and years, 
+              - check id = id
+
+    3: sort the list by name, and if they are the same, use year
+
+    4: map it to get ordered ids
+
+*)
+
+let order_ids st r =
+  let used_citations = cites r in 
+    let rec rem_rest2 id st acc =
+      match st with 
+      |Some (Some i,Some n, Some y)::xs-> if id = i then acc@[(i,n,y)] else rem_rest2 id xs acc
+      |[]-> acc@[(id, [], 0)]
+      |_::xs ->rem_rest2 id xs acc
+      in
+    let rec rem_rest ids acc=
+      match ids with 
+      |x::xs-> rem_rest xs (rem_rest2 x st acc)
+      |[]->  acc in 
+
+    let l = rem_rest used_citations [] in
+    List.map (fun (id, _,_) -> id) (List.sort_uniq 
+      (fun x y ->
+        match (x, y) with
+        |((id, (n::ns), y), (id2, (m::ms), y2))-> String.compare n m *1000+ y-y2
+        |_->  0
+         ) 
+    l ) ;;
+
+(*
+Given ordered IDs and ref.txt, sort the used reference list
+
+Steps:
+
+    1. split the ref.txt by line
+
+    2. split lines by ":" to get tuples of ID and Reference
+
+    3. sort the list of tuples by the order of IDs given
+        - for ids 
+          - for find reference and put the string in the accumulator
+    
+    4. COnvert the sorted reference to the a single string starting with <<REFERENCE>>
+
+*)
+
+
+let order_refs st ids = 
+  let list_refs = String.split_on_char '\n' st in 
+
+  let rec find_ref refs id =
+    match refs with 
+    |[]-> "I could not find the reference for id: "^ string_of_int id
+    |(x, con)::xs-> if x = id then "     "^con else find_ref xs id in
+     
+  let rec sort_refs refs is acc = 
+    match is with 
+    |[]->acc
+    |x::xs-> sort_refs refs xs (acc@[find_ref refs x]) in
+
+  let rec each_ref li acc= 
+    match li with 
+    |[]-> acc
+    |x :: xs->
+      let tmp = String.split_on_char ':' x in 
+      if (int_of_string_opt (List.hd tmp)) = None then each_ref xs acc
+      else 
+        each_ref xs [(int_of_string (List.hd tmp), List.hd (List.tl tmp))]@acc
+      in  
+      let list_sorted = sort_refs (each_ref list_refs []) ids [] in
+  
+    let rec list_to_string st acc= 
+      match st with 
+      |[]-> acc
+      |x::xs-> list_to_string xs (acc^"\n\n"^x) in 
+      list_to_string list_sorted "\n\n<<REFERENCE>>\n";;
+    
+;;
+
+
+
 (*
 Return the value in the out_put.txt
 *)
 
 let () =
   let filename = "output.txt" in
-  let content = replace_citation text (in_text (get_author_year ref)) in
+  let con = (replace_citation text (in_text (get_author_year reference)) )
+ in
+ let content = con ^ (order_refs reference (order_ids (get_author_year reference) !used))in
 
   (* Open file for writing *)
   let oc = open_out filename in
 
   (* Write the string to the channel *)
-  Out_channel.output_string oc content;
+  Out_channel.output_string oc (content);
 
   (* Close the channel to flush the buffer and free resources *)
   close_out oc;;
-
 
 
 (*
 
 ##### Debugging Tools ######
 
-1: make a list of in text citation in the format: 
-      id: name, year
+    1: make a list of in text citation in the format: 
+          id: name, year
 
 
 let to_string lst = 
@@ -259,11 +379,33 @@ let to_string lst =
 
 
 
+    2. Check if the in_text and get_author_year is working or not
+
 print_endline(to_string (in_text (get_author_year ref)));;
 
 
+    3. Check if look_up is working or not
+
 print_endline(look_up 100 (in_text (get_author_year ref)));;
 
+
+    4: Print the in-text citations 
+
+let show_citations_used r = 
+  let used_citations = cites r in
+  let rec f l acc=
+            match l with 
+            |[]->acc^"\n"
+            |x::xs-> acc^"\n"^ f xs (string_of_int x) in
+  f used_citations "";;
+
+
+    5: print_int_list (order_ids (get_author_year reference) !used)  ;;
+
+let rec print_int_list sd = 
+    match sd with 
+    |[]-> print_endline("")
+    |x::xs-> print_endline(string_of_int x); print_int_list xs;;
 
 
 
