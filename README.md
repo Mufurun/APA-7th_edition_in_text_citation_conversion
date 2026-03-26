@@ -21,8 +21,8 @@ Files:
 
     - out_put   : output file
 
-
-For example: 
+### For example: 
+__________________________________________________________
 
       <<<  ref.text  >>>
 
@@ -32,6 +32,7 @@ For example:
 215: Valente, G., Pitto, L., Testi, D., Seth, A., Delp, S. L., Stagni, R., Viceconti, M., & Taddei, F. (2014). Are Subject-Specific Musculoskeletal Models Robust to the Uncertainties in Parameter Identification? PloS One, 9(11), e112625. https://doi.org/10.1371/journal.pone.0112625
 	https://journals.plos.org/plosone/article/file?id=10.1371/journal.pone.0112625&type=printable
 
+__________________________________________________________
 
       <<<   text.txt   >>>
 
@@ -40,14 +41,9 @@ Some text here. Some text here. Some text here. Some text here. Some text here. 
 Some text here. Some text here. Some text here. Some text here. Some text here (215; 214). Some text here. Some text here. 
 
 
-<<REFERENCE>>
 
 
-     Persad, L. S., Binder-Markey, B. I., Shin, A. Y., Lieber, R. L., & Kaufman, K. R. (2023). American Society of Biomechanics Journal of Biomechanics Award 2022: Computer models do not accurately predict human muscle passive muscle force and fiber length: Evaluating subject-specific modeling impact on musculoskeletal model predictions. Journal of Biomechanics, 159, Article 111798. https://doi.org/10.1016/j.jbiomech.2023.111798
-
-	 
-	 Valente, G., Pitto, L., Testi, D., Seth, A., Delp, S. L., Stagni, R., Viceconti, M., & Taddei, F. (2014). Are Subject-Specific Musculoskeletal Models Robust to the Uncertainties in Parameter Identification? PloS One, 9(11), e112625. https://doi.org/10.1371/journal.pone.0112625
-
+__________________________________________________________
 
 
       <<<   output.txt   >>>
@@ -55,3 +51,11 @@ Some text here. Some text here. Some text here. Some text here. Some text here (
 Some text here. Some text here. Some text here. Some text here. Some text here. Some text here. Some text here (Persad et al., 2023).
 Some text here. Some text here. Some text here. Some text here. Some text here. Some text here. Some text here. Some text here. 
 Some text here. Some text here. Some text here. Some text here. Some text here (Valente et al., 2014; Persad et al., 2023). Some text here. Some text here. 
+
+
+< < REFERENCE > >
+
+ Persad, L. S., Binder-Markey, B. I., Shin, A. Y., Lieber, R. L., & Kaufman, K. R. (2023). American Society of Biomechanics Journal of Biomechanics Award 2022: Computer models do not accurately predict human muscle passive muscle force and fiber length: Evaluating subject-specific modeling impact on musculoskeletal model predictions. Journal of Biomechanics, 159, Article 111798. https://doi.org/10.1016/j.jbiomech.2023.111798
+
+	 
+ Valente, G., Pitto, L., Testi, D., Seth, A., Delp, S. L., Stagni, R., Viceconti, M., & Taddei, F. (2014). Are Subject-Specific Musculoskeletal Models Robust to the Uncertainties in Parameter Identification? PloS One, 9(11), e112625. https://doi.org/10.1371/journal.pone.0112625
